@@ -12,7 +12,7 @@ Tested with Python 2.7.6, SciPy 0.16.1, NumPy 1.8.2
 
 Usage:
     %(progname)s --help | --version
-    %(progname)s [options]
+    %(progname)s [options] [FILE...]
 
 Options:
     -n=<int>          Number of dice to roll [default: 7]
@@ -113,4 +113,5 @@ if __name__ == '__main__':
     )
     plt.plot(prob,'o',label='formula')
     plt.legend(loc='upper right', shadow=True, fontsize='x-large')
+    plt.savefig( args['FILE'][-1] if len(args['FILE']) >= 1 else 'hist_d{}_n{}_t{}.png'.format(d, n, t) )
     plt.show()
