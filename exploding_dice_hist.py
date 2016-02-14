@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     # SIMULATE ROLLS
     samples = int(float( args['--samples'] ))
-    nbins = int(n*1.1)
+    nbins = int(n+3)
     rest = 0
     hist = np.zeros(nbins, dtype=float)
     for i in range(0, nbins*samples):
@@ -94,16 +94,20 @@ if __name__ == '__main__':
     prob = np.arange(0, nbins, dtype=float)
     probgetter = np.vectorize(lambda x: calcprob(d,n,t,int(x)))
     prob = probgetter(prob)
+    prob[0] = 1 - prob[1:].sum() - rest
     print(prob)
 
     # PLOT HISTOGRAM
     plt.title(
-            r'Parameters: $d={};\quad n={};\quad t={};\quad R={:.2g}$'.format(
-              d,         n,         t,         rest
+        'Histogram of results in exploding rolls of '
+        '$n={}$ identical ${}$-sided dice\n'
+        'Not shown: ${:.2g}$% of rolls with $>{}$ hits'.format(
+            n,             d,
+                      rest*100,               nbins
         )
     )
-    plt.xlabel('Hits')
-    plt.ylabel('Frequency of this many hits')
+    plt.xlabel(u'Hits (dice ≥${}$)'.format(t))
+    plt.ylabel('Relative frequency of hits')
     plt.xticks(range(0,nbins))
     plt.hist(
         range(0,nbins),
@@ -111,7 +115,7 @@ if __name__ == '__main__':
         bins=[0.5+x for x in range(-1,nbins)],
         label='simulation'
     )
-    plt.plot(prob,'o',label='formula')
+    plt.plot(prob,'o',label='theory')
     plt.legend(loc='upper right', shadow=True, fontsize='x-large')
     plt.savefig( args['FILE'][-1] if len(args['FILE']) >= 1 else 'hist_d{}_n{}_t{}.png'.format(d, n, t) )
     plt.show()
