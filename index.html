@@ -57,11 +57,18 @@
             var out   = document.getElementById("area");
             var r6    = document.getElementById("r6").checked;
             var dens  = document.getElementById("dens").checked;
-            if( val<1 || sides<1 ) {
-                out.innerHTML = 'Sides or dice wrong!'
+            if( val<1 || sides<1 || val>60 ) {
+                out.innerHTML = 'Sides or dice too high or low!'
                 return;
             }
-            if( thres > sides) thres = sides;
+            if( thres > sides) {
+                thres = sides;
+                document.getElementById('thres').value = thres;
+            }
+            if( thres < 1) {
+                thres = 1;
+                document.getElementById('thres').value = thres;
+            }
             out.innerHTML = Roll_dice(sides, val, thres, r6);
 
             // Get Probability Density
