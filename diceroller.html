@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="AUTHOR" content="con-f-use@gmx.net">
+    <title>Dice Calc</title>
+    <script src="html5-canvas-bar-graph.js"></script>
+    <script type="text/javascript">
+
+        function randrange(min, max) {
+            /*
+            Return an integar between min and max.
+            */
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function Roll_dice(sds, nbr, trh, r6) {
+            /*
+            Return a string giving the number of hits in a roll of `nbr` fair,
+            identical, `sds`-sided dice, where a maximum roll 'explodes' and every die
+            equal or higher to `trh` is deemed a hit.
+            */
+            var succ = 0, fail = 0;
+            for(i=0; i<nbr; ++i) {
+                rslt = randrange(1,sds);
+                if(rslt==1) fail++;
+                else if(rslt>=trh) succ++;
+                while(r6 && rslt == sds) {
+                    rslt = randrange(1,sds);
+                    succ += rslt>=trh;
+                }
+            }
+            return String(succ) + ( succ==1 ? ' Success ' : ' Successes ')
+                + ((fail > nbr/2) ? '(critical faliure: '+ fail +')' : '');
+        }
+
+        function Roll(val, r6id, densid, outid) {
+            /*
+            Update graph and result <div> with a new roll.
+             */
+            console.log('Roll update.');
+            var val   = parseInt(val);
+            var out   = document.getElementById(outid);
+            var r6    = document.getElementById(r6id).checked;
+            var dens  = document.getElementById(densid).checked;
+            out.innerHTML = Roll_dice(6, val, 5, r6);
+            // Get Probability Density
+            var nbins = Math.round(val+3);
+            var prob = new Array();
+            var calcfunc = Calcprob_binomial;
+            if(r6) calcfunc = Calcprob_exploding;
+            for(hts=1; hts<=nbins; ++hts) {
+                var tmp = calcfunc(6, val, 5, hts);
+                prob[hts] = Math.round(tmp * 100.0);
+                if( tmp>1.0 || tmp<0.0 ) {
+                    alert("Prob["+ String(hts-1) +"]: "+ String(prob[hts-1]));
+                    return;
+                }
+            }
+            for(i=prob[0]=0; i<prob.length; ++i) prob[0] += prob[i];
+            prob[0] = 100 - prob[0];
+            // Cummlative distribution
+            if(!dens)
+                for(i=0; i<nbins; i++)
+                    for(j=i+1; j<nbins; ++j)
+                        prob[i] += prob[j];
+            var xtics = new Array();
+            for(i=0; i<=nbins; ++i) xtics[i] = i;
+            graph.margin = Math.ceil(nbins/5);
+            graph.maxValue = Math.max(prob)+1;
+            graph.xAxisLabelArr = xtics;
+            graph.width = 400 + (nbins-20) * 5*graph.margin;
+            //alert( prob.join('\n') );
+            if(graph) graph.update( prob );
+        }
+
+        function binomial(nbr, spl) {
+           /*
+           Get the total number of unique combinations of spl samples drawn from nbr
+           possible outcomes.
+
+           nbr ... total number of items
+           spl ... size of the sample
+           */
+            if ((typeof nbr !== 'number') || (typeof spl !== 'number')) return false;
+            if(spl>=nbr) return 0.0;
+            if(spl<0) return 0.0;
+            var coeff = 1;
+            for (var x = nbr-spl+1; x <= nbr; x++) coeff *= x;
+            for (x = 1; x <= spl; x++) coeff /= x;
+            return coeff;
+        }
+
+        function Calcprob_binomial(sds, nbr, trh, hts) {
+            var tmp = (sds-trh+1) / sds;
+            if(hts>nbr) return 0.0;
+            if(nbr==1) return hts==1 ? (sds-trh+1)/sds : 0.0;
+            return binomial(nbr,hts) * Math.pow(tmp, hts) * Math.pow(1.0-tmp, nbr-hts);
+        }
+
+        function Calcprob_exploding(sds, nbr, trh, hts) {
+            /*
+            Return the probability for `h` hits in a roll of `n` fair, identical
+            `d`-sided exploding dice, where very die equal or higher to `t` is
+            deemed a hit.
+
+            Taken from: http://math.stackexchange.com/a/1649514/11949
+            */
+            if(nbr==1) return hts==0 ? (trh-1)/sds : (sds+trh-1)/Math.pow(sds,hts+1);
+            var factor = Math.pow(trh-1, nbr) / Math.pow(sds, nbr+hts);
+            var probsum, oldsum, tmp1, tmp2, tmp3;
+            for(k=probsum=oldsum=0.0; k<=Math.max(hts, nbr); ++k) {
+                tmp1 = binomial(nbr, k);
+                tmp2 = binomial(nbr+hts-k-1, hts-k)
+                tmp3 = Math.pow(sds*(sds-trh)/(trh-1), k)
+                probsum += tmp1*tmp2*tmp3;
+                if(probsum<oldsum) {
+                    alert('Overflow occured in Calcprob()!');
+                    return 255;
+                }
+                oldsum = probsum;
+            }
+            return factor * probsum;
+        }
+
+    </script>
+</head><body>
+
+    <span id="area"></span><br>
+
+    <span>Dice:&nbsp;&nbsp;</span>
+    <input id="field" type="text" value="5" onkeyup="Roll(this.value,'r6', 'dens', 'area');" onclick="Roll(this.value, 'r6', 'dens', 'area');">
+    <br>
+
+    <input id="r6" type="checkbox" title="rule of six?" onclick="Roll(document.getElementById('field').value, 'r6', 'dens', 'area');"><span>Rule of 6?</span>&nbsp;&nbsp;&nbsp;&nbsp;
+    <input id="dens" type="checkbox" title="density?" onclick="Roll(document.getElementById('field').value, 'r6', 'dens', 'area');"><span>density?</span>
+
+    <br><br><br>
+
+    <div id="graphDiv1" onclick="Roll(document.getElementById('field').value, 'r6',  'dens', 'area');"></div>
+    <script type="text/javascript">
+        graph = (function () {
+
+            function createCanvas(divName) {
+
+                var div = document.getElementById(divName);
+                var canvas = document.createElement('canvas');
+                div.appendChild(canvas);
+                if (typeof G_vmlCanvasManager != 'undefined') {
+                    canvas = G_vmlCanvasManager.initElement(canvas);
+                }
+                var ctx = canvas.getContext("2d");
+                return ctx;
+            }
+
+            var ctx = createCanvas("graphDiv1");
+
+            var graph = new BarGraph(ctx);
+            graph.width=400;
+            graph.height=250;
+            return graph
+        }());
+        Roll(document.getElementById('field').value, 'r6',  'dens', 'area');
+    </script><br>
+
+</body></html>
