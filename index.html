@@ -65,11 +65,11 @@
             out.innerHTML = Roll_dice(sides, val, thres, r6);
 
             // Get Probability Density
-            var nbins = Math.round(val + 3 - Math.floor(val/1.5));
             var prob = new Array();
             var calcfunc = Calcprob_binomial;
             if(r6) calcfunc = Calcprob_exploding;
-            for(hts=1; hts<=nbins; ++hts) {
+            var nbins = Math.round(val + 3 - Math.floor(val/1.7));
+            for(hts=1; hts<=70 && (prob[hts-1]>3e-3 || hts<val/2+2); ++hts) {
                 var tmp = calcfunc(sides, val, thres, hts);
                 prob[hts] = Math.round(tmp * 100.0);
                 if( tmp>1.0 || tmp<0.0 ) {
@@ -79,21 +79,31 @@
             }
             for(i=prob[0]=0; i<prob.length; ++i) prob[0] += prob[i];
             prob[0] = 100 - prob[0];
-            if( prob[0] > prob[1] && val > 10 ) prob[0] = 0;
+            if( (prob[0] > prob[1] && val > 10) || prob[0]<0 ) prob[0] = 0;
 
             // Cummlative distribution
-            if(!dens)
-                for(i=0; i<nbins; i++)
-                    for(j=i+1; j<nbins; ++j)
+            if(!dens) {
+                for(i=0; i<prob.length; i++)
+                    for(j=i+1; j<prob.length; ++j)
                         prob[i] += prob[j];
+                prob[0] = 100;
+            }
             var xtics = new Array();
-            for(i=0; i<=nbins; ++i) xtics[i] = String(i);
+            for(i=0; i<=prob.length; ++i) xtics[i] = String(i);
+
+            if(!dens)
+                for(i=0; i<prob.length && (prob[i]>97.5 && prob.length>15); ++i);
+            else
+                for(i=0; i<prob.length && prob[i]<1e-5; ++i);
+            if(i>2) i-=1;
+            prob.splice(0, i);
+            xtics.splice(0, i);
 
             // Update Graph
-            graph.margin = Math.ceil(nbins/5);
+            graph.margin = Math.ceil(prob.length/11);
             graph.maxValue = Math.max(prob)+1;
             graph.xAxisLabelArr = xtics;
-            graph.width = 400 + (nbins-20) * 5*graph.margin;
+            graph.width = 400 + (prob.length-20) * 5*graph.margin;
             //alert( prob.join('\n') );
             if(graph) graph.update( prob );
         }
@@ -190,14 +200,14 @@
             return graph
         }());
     </script>
-    <input id="dens" type="checkbox" title="density?" onchange="Roll();"><span>density?</span><br>
-    <i style="font-size:75%">To roll, click anything or change any value. Sometimes the graph doesn't update (properly). Just reload the page then.</i>
+    <input id="dens" type="checkbox" title="density?" onchange="Roll();"><span>exactly this many hits?</span><br>
+    <i style="font-size:50%">To roll, click anything or change any value. Sometimes the graph doesn't update (properly). Just reload the page then. If you get really weird results, something has overflown when calculating a factorial (i.e. your values are too high). This is still buggy and might remain so.</i>
 
-    <p style="font-size: 75%;">
+    <p style="font-size:75%;">
         Sides: <input id="sides" type="number" value="5" style="width:3em;" min="1" onchange="Roll();">&nbsp;&nbsp;&nbsp;
-        Threshold:  <input id="thres" type="number" value="6" style="width:3em;" min="1" onchange="Roll();"><br>
-        See <a href="https://github.com/con-f-use/Exploding-Diepool">Expldong-Dicepool</a> on github.
-
+        Threshold:  <input id="thres" type="number" value="6" style="width:3em;" min="1" onchange="Roll();">
     </p>
+    <br>
+    <p style="font-size:50%; text-align: right;">See <a href="https://github.com/con-f-use/Exploding-Diepool">Expldong-Dicepool</a> on github.</p>
 
 </body></html>
