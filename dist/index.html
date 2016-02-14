@@ -3,6 +3,19 @@
     <meta charset="UTF-8">
     <meta name="AUTHOR" content="con-f-use@gmx.net">
     <title>Dice Calc</title>
+    <style type="text/css">
+        body {
+            color: black;
+            background-color: white;
+            font-size: 150%;
+            font-family: monospace;
+            text-align: center;
+            margin: 10px auto 10px auto;
+            padding: 5px 15px 10px 15px;
+            border: 2px solid black;
+            max-width: 512px;
+        }
+    </style>
     <script src="html5-canvas-bar-graph.js"></script>
     <script type="text/javascript">
 
@@ -52,7 +65,7 @@
             out.innerHTML = Roll_dice(sides, val, thres, r6);
 
             // Get Probability Density
-            var nbins = Math.round(val + 3 - Math.floor(val/2.3));
+            var nbins = Math.round(val + 3 - Math.floor(val/1.5));
             var prob = new Array();
             var calcfunc = Calcprob_binomial;
             if(r6) calcfunc = Calcprob_exploding;
@@ -66,6 +79,7 @@
             }
             for(i=prob[0]=0; i<prob.length; ++i) prob[0] += prob[i];
             prob[0] = 100 - prob[0];
+            if( prob[0] > prob[1] && val > 10 ) prob[0] = 0;
 
             // Cummlative distribution
             if(!dens)
@@ -141,7 +155,7 @@
     </script>
 </head><body onload="Roll();">
 
-    <i style="font-size:75%">Click or change anything to roll.<br>Your roll:</i>
+    <i style="font-size:75%">Your roll:</i>
 
     <p id="area" style="font-size:120%; font-weight:bolder;"></p>
 
@@ -177,7 +191,7 @@
         }());
     </script>
     <input id="dens" type="checkbox" title="density?" onchange="Roll();"><span>density?</span><br>
-    <i style="font-size:75%">Sometimes the graph doesn't update (properly).<br>Just reload the page then.</i>
+    <i style="font-size:75%">To roll, click anything or change any value. Sometimes the graph doesn't update (properly). Just reload the page then.</i>
 
     <p style="font-size: 75%;">
         Sides: <input id="sides" type="number" value="5" style="width:3em;" min="1" onchange="Roll();">&nbsp;&nbsp;&nbsp;
