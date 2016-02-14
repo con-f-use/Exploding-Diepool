@@ -20,6 +20,9 @@ Options:
                       [default: 5]
     -d=<int>          Number of sides of each die [default: 6]
     --samples=<int>   Number of such independent rolls [default: 5000]
+    --accumulate      Display cummulative distribution function istead of the
+                      probability distribution function
+    --show-regular    Show regular non-exploding distribution
 """
 
 #=======================================================================
@@ -55,7 +58,7 @@ def simroll(d, n, t):
 def calcprob(d, n, t, h):
     """
     Return the probability for `h` hits in a roll of `n` fair, identical
-    `d`-sided exploding dice, where very die equal or higher to `t` is
+    `d`-sided exploding dice, where every die equal or higher to `t` is
     deemed a hit.
 
     Taken from: http://math.stackexchange.com/a/1649514/11949
@@ -65,6 +68,16 @@ def calcprob(d, n, t, h):
     for k in range(0, max([h,n])+1 ):
         probsum += binom(n,k) * binom(n+h-k-1, h-k) * (d*(d-t)/(t-1))**k
     return factor * probsum
+
+
+def calcrprob(d, n, t, h):
+    """
+    Return the probability for `h` hits in a roll of `n` fair, identical
+    `d`-sided non-exploding dice, where every die equal or higher to `t` is
+    deemed a hit. This is obviously a binomial distribution.
+    """
+    tmp = (d-t+1)/d
+    return binom(n, h) * tmp**h * (1-tmp)**(n-h)
 
 
 if __name__ == '__main__':
@@ -89,13 +102,26 @@ if __name__ == '__main__':
             rest += 1
     hist /= nbins*samples
     rest /= nbins*samples
+    if args['--accumulate']:
+        for hindex, _ in enumerate(hist):
+            hist[hindex] += hist[hindex+1:].sum()
 
     # GET PROBABILITIES
     prob = np.arange(0, nbins, dtype=float)
     probgetter = np.vectorize(lambda x: calcprob(d,n,t,int(x)))
     prob = probgetter(prob)
     prob[0] = 1 - prob[1:].sum() - rest
+    if args['--accumulate']:
+        for pindex, _ in enumerate(prob):
+            prob[pindex] += prob[pindex+1:].sum()
     print(prob)
+    if args['--show-regular']:
+        rprob = np.arange(0, nbins, dtype=float)
+        rprobgetter = np.vectorize(lambda x: calcrprob(d,n,t,int(x)))
+        rprob = rprobgetter(rprob)
+        if args['--accumulate']:
+            for pindex, _ in enumerate(rprob):
+                rprob[pindex] += rprob[pindex+1:].sum()
 
     # PLOT HISTOGRAM
     plt.title(
@@ -103,11 +129,16 @@ if __name__ == '__main__':
         '$n={}$ identical ${}$-sided dice\n'
         'Not shown: ${:.2g}$% of rolls with $>{}$ hits'.format(
             n,             d,
-                      rest*100,               nbins
+                      rest*100,               nbins-1
         )
     )
-    plt.xlabel(u'Hits (dice ≥${}$)'.format(t))
-    plt.ylabel('Relative frequency of hits')
+    hitstext = ''
+    freqtext = ''
+    if args['--accumulate']:
+        hitstext = 'At least x '
+        freqtext = 'at least x '
+    plt.xlabel(u'{}Hits (number of dice ≥${}$)'.format(hitstext, t))
+    plt.ylabel('Relative frequency of {}hits'.format(freqtext))
     plt.xticks(range(0,nbins))
     plt.hist(
         range(0,nbins),
@@ -115,7 +146,8 @@ if __name__ == '__main__':
         bins=[0.5+x for x in range(-1,nbins)],
         label='simulation'
     )
-    plt.plot(prob,'o',label='theory')
-    plt.legend(loc='upper right', shadow=True, fontsize='x-large')
-    plt.savefig( args['FILE'][-1] if len(args['FILE']) >= 1 else 'hist_d{}_n{}_t{}.png'.format(d, n, t) )
+    plt.plot(prob,'o', label='theory')
+    if args['--show-regular']: plt.plot(rprob, '--', drawstyle='steps-mid', label='non-exploding')
+    plt.legend(loc='upper right', shadow=True)#, fontsize='x-large')
+    plt.savefig( args['FILE'][-1] if len(args['FILE']) >= 1 else 'hist_d{}_n{}_t{}{}.png'.format(d, n, t, '_acc' if args['--accumulate'] else '') )
     plt.show()
