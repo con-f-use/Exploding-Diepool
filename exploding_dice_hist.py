@@ -69,6 +69,15 @@ def calcprob(d, n, t, h):
         probsum += binom(n,k) * binom(n+h-k-1, h-k) * (d*(d-t)/(t-1))**k
     return factor * probsum
 
+def calcexpdev(d, n, t):
+    """
+    Return expectation value and standard deviation for open-ended binomial
+    distribution.
+    """
+    E = n * (d-t+1) / (d-1)
+    s = math.sqrt(E - n * ((d-t)**2 - 1) / (d-1)**2)
+    return E, s
+
 
 def calcrprob(d, n, t, h):
     """
@@ -76,17 +85,28 @@ def calcrprob(d, n, t, h):
     `d`-sided non-exploding dice, where every die equal or higher to `t` is
     deemed a hit. This is obviously a binomial distribution.
     """
-    tmp = (d-t+1)/d
-    return binom(n, h) * tmp**h * (1-tmp)**(n-h)
+    p = (d-t+1)/d
+    return binom(n, h) * p**h * (1-p)**(n-h)
+
+def calcrexpdev(d, n, t):
+    """
+    Return expectation value and standard deviation for binomial distribution.
+    """
+    p = (d-t+1)/d
+    E = n * p
+    s = math.sqrt(n * p * (1-p))
+    return E, s
 
 
 if __name__ == '__main__':
     progname = os.path.splitext(os.path.basename( __file__ ))[0]
-    vstring = ' v0.1\nWritten by con-f-use@gmx.net\n(Thu Feb 11 21:25:46 CET 2016) on confusion'
+    vstring = ' v0.1\nWritten by con-f-use@gmx.net\n(Thu Feb 2016)'
     args = docopt(__doc__ % locals(), version=progname+vstring)
 
     # VALIDATE INPUT
-    d, n, t = int(float(args['-d'])), int(float(args['-n'])), int(float(args['-t']))
+    d, n, t = (
+        int(float(args['-d'])), int(float(args['-n'])), int(float(args['-t']))
+    )
     assert d>0 and n>0 and d>=t>0, 'Invalid input parameters'
 
     # SIMULATE ROLLS
@@ -134,11 +154,19 @@ if __name__ == '__main__':
     )
     hitstext = ''
     freqtext = ''
+    freqtext2= ''
     if args['--accumulate']:
-        hitstext = 'At least x '
-        freqtext = 'at least x '
-    plt.xlabel(u'{}Hits (number of dice ≥${}$)'.format(hitstext, t))
-    plt.ylabel('Relative frequency of {}hits'.format(freqtext))
+        hitstext = 'Minimum '
+        freqtext = 'this many '
+        freqtext2 = ' or more'
+    plt.xlabel(u'{}Hits (dice ≥${}$)'.format(hitstext, t))
+    plt.ylabel('Relative frequency of {}hits{}'.format(freqtext, freqtext2))
+    E, s = calcexpdev(d, n, t)
+    plt.axvspan(
+        E-s, E+s, color='b', alpha=0.25,
+        label='$\overline{\mathdefault{Hits}} \pm \sigma_\mathdefault{Hits}$'
+    )
+    plt.axvline(x=E,   linestyle='-', color='b', alpha=0.75)
     plt.xticks(range(0,nbins))
     plt.hist(
         range(0,nbins),
@@ -147,7 +175,14 @@ if __name__ == '__main__':
         label='simulation'
     )
     plt.plot(prob,'o', label='theory')
-    if args['--show-regular']: plt.plot(rprob, '--', drawstyle='steps-mid', label='non-exploding')
+    if args['--show-regular']:
+        plt.plot(rprob, '--', drawstyle='steps-mid', label='non-exploding')
     plt.legend(loc='upper right', shadow=True)#, fontsize='x-large')
-    plt.savefig( args['FILE'][-1] if len(args['FILE']) >= 1 else 'hist_d{}_n{}_t{}{}.png'.format(d, n, t, '_acc' if args['--accumulate'] else '') )
+    plt.savefig(
+        args['FILE'][-1] if len(args['FILE']) >= 1
+            else
+                'hist_d{}_n{}_t{}{}.png'.format(
+                    d, n, t, '_acc' if args['--accumulate'] else ''
+                )
+    )
     plt.show()
