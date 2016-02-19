@@ -47,7 +47,7 @@
                 r6
                     ? Calcexpdev_exploding(sides, val, thres)
                     : Calcexpdev_binomial(sides, val, thres)
-            );
+            ) +' Hits';
 
             // Get Probability Density
             var prob = new Array();
@@ -116,7 +116,7 @@
                     succ += rslt>=trh;
                 }
             }
-            return String(succ) + ( succ==1 ? ' Success ' : ' Successes ')
+            return String(succ) + ( succ==1 ? ' Hit ' : ' Hits ')
                 + ((fail > nbr/2) ? '(critical faliure: '+ fail +')' : '');
         }
 
