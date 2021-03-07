@@ -32,8 +32,12 @@ Many thanks to Brian Tung and the other folks at Mathematics Stackexchange that 
 
 # Savage Worlds
 
-Here is the die roll situation for Savage Worlds, where you take the of an exploding d6 ("Wild Die") and one of a d4, d6, d8, d10 or d12 that also explodes.
+Here is the die roll situation for Savage Worlds, where you take the higher result of an exploding d6 ("Wild Die") and that of one of a d4, d6, d8, d10 or d12 that also explodes.
 The steps in mean reslut from one die to the next are: 0.5, 0.7, 0.7, 0.9.
+
+![Success probabilities for Savage World rolls with "Wild Die"](./img/savage_worlds.png)
+
 Also note the gaps at common products in the graph below.
 
-![Histogram of die results for Savage World rolls with "Wild Die"](./img/savage_worlds.png)
+![Histogram of die results for Savage World rolls with "Wild Die"](./img/hist_savage_worlds.png)
+
