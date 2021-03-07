@@ -52,7 +52,6 @@ def _successes(d=4, N=int(1e6)):
     return probs
 
 def successes():
-    #  rm out.png; montage -tile 1x0 -geometry -70-30 -border 0 prob_1d4_*.png prob_1d6_*.png prob_1d8_*.png prob_1d10_*.png prob_1d12_*.png out.png; firefox out.png
     args = [int(x) for x in sys.argv[1:] if x != "view" and x != "prob"]
     N = int(1e6)
     D = args if len(args)>0 else [4, 6, 8, 10, 12]
@@ -61,19 +60,23 @@ def successes():
         D = args[:-1]
     print(D, N)
 
-    for d in D:
+    fig, ax = plt.subplots(figsize=(15,10))
+    ax.set_title(f"Success probability with Wild-Die ({len(D)}x{N:g} rolls)")
+    ax.set_xlabel("difficulty")
+    ax.set_ylabel("probability of success in percent")
+    #ax.ticklabel_format(axis="y", style="sci", scilimits=[-2,2], useOffset=False)
+
+    for d in sorted(D, reverse=True):
+        print(f"{d} {N}...")
         result = _successes(d=d, N=N)
         k, v = list(result.keys()), list(result.values())
-        fig, ax = plt.subplots(figsize=(15,10))
-        histo = ax.bar(k, v)
-        ax.set_xticks(k)
-        #ax.ticklabel_format(axis="y", style="sci", scilimits=[-2,2], useOffset=False)
-        ax.set_title(f"Exploding 1d{d} success probability with Wild-Die ({N} rolls)")
-        ax.set_xlabel("difficulty")
-        ax.set_ylabel("probability of success in percent")
-        plt.savefig(f"prob_1d{d}_{N}.png")
-        if "view" in sys.argv:
-            plt.show()
+        histo = ax.bar(k, v, label=f"1d{d}")
+
+    ax.set_xticks(k)
+    plt.legend(loc='upper right');
+    plt.savefig(f"probs_savage_worlds_{N:g}.png")
+    if "view" in sys.argv:
+        plt.show()
 
 if __name__ == "__main__":
     if "prob" in sys.argv:
