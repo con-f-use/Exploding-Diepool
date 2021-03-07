@@ -29,3 +29,11 @@ Here is a (buggy) [html page](http://con-f-use.github.io/Exploding-Diepool/) tha
 ### Acknowledgements
 
 Many thanks to Brian Tung and the other folks at Mathematics Stackexchange that were kind enough to ponder (and answer) my [question](http://math.stackexchange.com/q/1644794/11949).
+
+# Savage Worlds
+
+Here is the die roll situation for Savage Worlds, where you take the of an exploding d6 ("Wild Die") and one of a d4, d6, d8, d10 or d12 that also explodes.
+The steps in mean reslut from one die to the next are: 0.5, 0.7, 0.7, 0.9.
+Also note the gaps at common products in the graph below.
+
+![Histogram of die results for Savage World rolls with "Wild Die"](./img/savage_worlds.png)
